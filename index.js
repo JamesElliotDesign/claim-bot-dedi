@@ -296,7 +296,7 @@ app.post("/webhook", async (req, res) => {
     // 1. Handle the one-time verification event from CFTools
     if (eventType === "verification") {
         console.log("✅ Received webhook verification ping from CFTools. Responding with 200 OK.");
-        return res.status(200).send("OK");
+        return res.sendStatus(200);
     }
 
     // 2. For all other events, validate the signature first
