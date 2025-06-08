@@ -147,20 +147,46 @@ scheduleClaimReset();
 /**
  * Validate webhook signature from CFTools
  */
+// --- TEMPORARY DEBUGGING FUNCTION ---
 function validateSignature(req) {
+    console.log("--- Starting Signature Validation ---");
+
     const receivedSignature = req.headers["x-cf-signature"];
     if (!receivedSignature) {
-        return false; // No signature header present
+        console.error("Validation failed: No 'x-cf-signature' header found on the request.");
+        return false;
+    }
+    
+    if (!CF_WEBHOOK_SECRET || CF_WEBHOOK_SECRET.length === 0) {
+        console.error("Validation failed: The CF_WEBHOOK_SECRET environment variable is not set or is empty!");
+        return false;
     }
 
-    // Create a signature using your secret and the raw request body
+    // This buffer is what the signature is based on. Let's log its size.
+    console.log(`Raw Body Size: ${req.rawBody.length} bytes`);
+
+    // Log the signature we received from the header
+    console.log(`Received Signature from CFTools: ${receivedSignature}`);
+
+    // Generate our local signature using the exact same method
     const localSignature = crypto
         .createHmac("sha256", CF_WEBHOOK_SECRET)
-        .update(req.rawBody) // Use the raw buffer of the request body
+        .update(req.rawBody)
         .digest("hex");
-    
-    // Compare the signature from CFTools with your locally generated one
-    return crypto.timingSafeEqual(Buffer.from(receivedSignature), Buffer.from(localSignature));
+
+    // Log the signature we just created
+    console.log(`Locally Generated Signature:    ${localSignature}`);
+
+    // Perform the comparison
+    const signaturesMatch = crypto.timingSafeEqual(
+        Buffer.from(receivedSignature), 
+        Buffer.from(localSignature)
+    );
+
+    console.log(`Do signatures match? ${signaturesMatch}`);
+    console.log("--- Finished Signature Validation ---");
+
+    return signaturesMatch;
 }
 
 /**
