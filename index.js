@@ -23,6 +23,7 @@ const CLAIM_RADIUS = 500;
 const MEMBER_EXPIRY = 60 * 60 * 1000;
 const INTRUSION_RADIUS = 350;
 const INTRUSION_COOLDOWN = 1 * 60 * 1000;
+const CLAIM_TIMEOUT = 45 * 60 * 1000; // 45 minutes
 
 const lastIntrusionWarnings = {};
 const LEAVE_TRACKER = {};
@@ -281,6 +282,19 @@ function cleanExpiredGroupMembers() {
 }
 
 setInterval(cleanExpiredGroupMembers, 60 * 1000);
+
+function releaseExpiredPOIs() {
+  const now = Date.now();
+  for (const poi in CLAIMS) {
+    if (now - CLAIMS[poi].timestamp >= CLAIM_TIMEOUT) {
+      delete CLAIMS[poi];
+      console.log(`⌛ ${poi} auto-unclaimed after 45 min timeout`);
+      sendServerMessage(`${poi} is now available to claim again!`);
+    }
+  }
+}
+
+setInterval(releaseExpiredPOIs, 60 * 1000); // Check expired claims every 1 min
 
 const processedMessages = new Map();
 setInterval(() => {
